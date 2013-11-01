@@ -1,0 +1,5 @@
+1.mount CP server
+2.go get gtbox, ota, cp_release, the three projects
+3.run scanner
+4.modify some constant to fit current env
+5.run revel in prod mode

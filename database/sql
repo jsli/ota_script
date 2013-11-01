@@ -1,0 +1,69 @@
+CREATE TABLE `cp_release` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `mode` char(16) NOT NULL,
+  `sim` char(16) NOT NULL,
+  `version` char(64) NOT NULL,
+  `version_scalar` bigint(15) NOT NULL DEFAULT 0,
+  `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `last_modify_ts` int NOT NULL,
+  `path` varchar(128) NOT NULL,
+  `prefix` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `path` (`path`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `arbi` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cp_id` int(11) NOT NULL DEFAULT 0,
+  `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `last_modify_ts` int NOT NULL,
+  `path` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `path` (`path`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `grbi` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cp_id` int(11) NOT NULL DEFAULT 0,
+  `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `last_modify_ts` int NOT NULL,
+  `path` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `path` (`path`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `rfic` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cp_id` int(11) NOT NULL DEFAULT 0,
+  `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `last_modify_ts` int NOT NULL,
+  `path` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `path` (`path`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `radio_ota_release` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `fingerprint` char(128) NOT NULL,
+  `md5` char(128) NOT NULL,
+  `size` int(11) NOT NULL,
+  `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `release_note` text NOT NULL,
+  `modified_ts` int NOT NULL,
+  `created_ts` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `fingerprint` (`fingerprint`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `release_creation_task` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `release_id` int(11) NOT NULL DEFAULT 0,
+  `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `update_request` text NOT NULL,
+  `fingerprint` char(128) NOT NULL,
+  `binary_data` blob,
+  `modified_ts` int NOT NULL,
+  `created_ts` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `fingerprint` (`fingerprint`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;

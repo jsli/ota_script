@@ -1,0 +1,43 @@
+1.sudo apt-get install bison ed gawk gcc libc6-dev make
+2.install setuptools
+	(1)install
+	wget http://peak.telecommunity.com/dist/ez_setup.py
+	sudo python ez_setup.py
+	(2)update
+	sudo python ez_setup.py -U setuptools
+	(3)error
+	curl -O http://python-distribute.org/distribute_setup.py
+	sudo /usr/bin/python2.6 distribute_setup.py
+	(4)sudo easy_install mercurial
+		sudo apt-get install python-dev : if error
+3.download go src
+	mkdir ~/go
+	cd ~/go
+	hg clone -r release https://go.googlecode.com/hg/ go
+	if error:
+		wget http://go.googlecode.com/files/go1.1.2.linux-amd64.tar.gz
+		tar zxvf go1.1.2.linux-amd64.tar.gz
+4.compile go
+	cd go/src
+	./all.bash
+5.config go
+	add ~/go/go/bin to your PATH
+	GOROOT=~/go/go
+	GOPATH=~/go/project
+	GOBIN=$GOPATH/bin
+	PATH=$PATH:$GOBIN
+6.test go
+	go run hello.go
+7.install revel
+	go get github.com/robfig/revel
+8.install revel command
+	go get github.com/robfig/revel/revel
+9. go get xxxxx
+	github.com/jsli/ota
+	github.com/jsli/gtbox
+	github.com/jsli/cp_release
+	github.com/robfig/cron
+	
+10. install mysql
+	sudo apt-get install mysql-server
+	create database ota
