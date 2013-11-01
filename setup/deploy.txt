@@ -1,5 +1,22 @@
-1.mount CP server
-2.go get gtbox, ota, cp_release, the three projects
-3.run scanner
-4.modify some constant to fit current env
-5.run revel in prod mode
+0. setup env:
+	export GOROOT=~/go/go
+	export GOPATH=~/go/projects
+	export GOARCH=amd64
+	export GOOS=linux
+	export GOBIN=$GOPATH/bin/
+	export GOTOOLS=$GOROOT/pkg/tool/
+	export PATH=$PATH:$GOBIN:$GOTOOLS
+	export OTA_ROOT=~/OTA
+	export OTA_SCRIPT_ROOT=$OTA_ROOT/scripts
+
+1.copy supervisor config ---> /etc/supervisord.conf
+	* modify some paths
+
+2.build scanner and monitor
+	scripts/launch/setup.sh
+
+3.run scanner, monitor and revel by supervisor
+	scripts/launch/launch.sh
+
+
+

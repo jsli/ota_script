@@ -4,10 +4,11 @@ USER_NAME=srv-release
 PASSWORD="ZPu9uPt2)n*tLV(~DRQ9"
 
 REMOTE_SERVER=//sh2-filer02/Release
-LOCAL_MIRROR=/home/manson/OTA/release/CP/CP_SERVER_MIRROR
-LOCAL_RELEASE=/home/manson/OTA/LOCAL_RELEASE
+LOCAL_ROOT=/home/manson/OTA
+LOCAL_MIRROR=$LOCAL_ROOT/release/CP/CP_SERVER_MIRROR
+LOCAL_RELEASE=$LOCAL_ROOT/LOCAL_RELEASE
 
-EXCLUDE_FILE=/home/manson/OTA/scripts/sync/exclude.list
+EXCLUDE_FILE=exclude.list
 
 #mount remote server
 sudo umount $REMOTE_SERVER
