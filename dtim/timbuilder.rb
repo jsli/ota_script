@@ -17,6 +17,7 @@
 require 'rubygems'
 require 'openssl'
 require 'net/http'
+require 'base64'
 
 #Rsa
 class RsaKey
@@ -121,21 +122,46 @@ class RsaKey
   end
 
   def load(rsaKey)
-    @key = OpenSSL::PKey::RSA::new(rsaKey)
-    a = @key.to_text.split(/^[^ ]{1,}:/)
-    /^.*\((?<keyBitLen>\d{1,}) bit\)$/ =~ a[1]
-    @keyBitLen = keyBitLen.to_i
-    @n = a[2].delete(": \n").to_i(16)
-    /^[^0-9]*(?<publicExponent>\d{1,}).*$/ =~ a[3]
-    @e = publicExponent.to_i
-    if a.length == 10
+    body = ''
+    rsaKey.each_line do |line|
+      if line.start_with? '----'
+        next
+      else
+        body << line
+      end
+    end
+    der = Base64.decode64(body)
+    asn1 = OpenSSL::ASN1.decode(der)
+    count = -1
+    int_ary = []
+    OpenSSL::ASN1.traverse(asn1) do | depth, offset, header_len, length, constructed, tag_class, tag|
+      if depth == 1
+        count += 1
+        if tag == OpenSSL::ASN1::INTEGER
+          int_ary << count
+        end
+      end
+    end
+    if int_ary.size == 2
+      @is_private = false
+      @n = asn1.value[int_ary[0]].value.to_i
+      @e = asn1.value[int_ary[1]].value.to_i
+      @keyBitLen = @n.size * 8
+      @key = OpenSSL::PKey::RSA::new(self.public_key_to_pem)
+    elsif int_ary.size == 9
       @is_private = true
-      @d = a[4].delete(": \n").to_i(16)
-      @p = a[5].delete(": \n").to_i(16)
-      @q = a[6].delete(": \n").to_i(16)
-      @dp = a[7].delete(": \n").to_i(16)
-      @dq = a[8].delete(": \n").to_i(16)
-      @iqmodp = a[9].delete(": \n").to_i(16)
+      @n = asn1.value[int_ary[1]].value.to_i
+      @e = asn1.value[int_ary[2]].value.to_i
+      @d = asn1.value[int_ary[3]].value.to_i
+      @p = asn1.value[int_ary[4]].value.to_i
+      @q = asn1.value[int_ary[5]].value.to_i
+      @dp = asn1.value[int_ary[6]].value.to_i
+      @dq = asn1.value[int_ary[7]].value.to_i
+      @iqmodp = asn1.value[int_ary[8]].value.to_i
+      @keyBitLen = @n.size * 8
+      @key = OpenSSL::PKey::RSA::new(self.private_key_to_pem)
+    else
+      puts 'error! unknown key format'
     end
   end
 
@@ -214,7 +240,6 @@ class RsaKey
   end
 
   def public_key_to_pem
-    version = OpenSSL::ASN1::Integer.new(0)
     modulus = OpenSSL::ASN1::Integer.new(@n)
     publicExponent = OpenSSL::ASN1::Integer.new(@e)
     sequence = OpenSSL::ASN1::Sequence.new([modulus, publicExponent])
@@ -253,32 +278,34 @@ end
 #TimBuilder
 class Integer
   def to_bytes
-    bytes = [self].pack('V*')
-    bytes
+    bytes = [self].pack('V')
+    bytes.force_encoding('ASCII-8BIT')
   end
 end
 
 class Array
   def to_bytes
     bytes = ""
+    bytes.force_encoding('ASCII-8BIT')
     self.each do |elem|
       if elem.respond_to?(:to_bytes)
           bytes << elem.to_bytes
       end
     end
-    bytes
+    bytes.force_encoding('ASCII-8BIT')
   end
 end
 
 class Struct
   def to_bytes
     bytes = ""
+    bytes.force_encoding('ASCII-8BIT')
     self.each do |elem|
       if elem.respond_to?(:to_bytes)
           bytes << elem.to_bytes
       end
     end
-    bytes
+    bytes.force_encoding('ASCII-8BIT')
   end
 end
 
@@ -289,10 +316,11 @@ class PackagePadding
 
   def to_bytes
     bytes = ""
+    bytes.force_encoding('ASCII-8BIT')
     if @bytesize > 0
       bytes = 0.chr * @bytesize
     end
-    bytes
+    bytes.force_encoding('ASCII-8BIT')
   end
 end
 
@@ -481,30 +509,26 @@ class TimBuilder
 
   #create all tims defined in layout_images
   def create_all_tims
-    tim_ids = []
+    tim_types = []
 
     @layout_images.each do |image|
       if image['Id'] =~ /^TIM/
-        tim_ids << image['Id']
+        tim_types << image['Tim']
       end
     end
 
-    create_tims(tim_ids)
+    create_tims(tim_types)
   end
 
-  #create tims according to tim_ids array, for example: ['TIMH', 'TIM1']
-  def create_tims(tim_ids)
-    return if tim_ids.nil? || tim_ids.empty?
-
-    tim_ids.each do |tim_id|
-      raise "#{tim_ids} contains invalid tim id: #{tim_id}" if tim_id !~ /^TIM/
-    end
+  #create tims according to tim included type array, for example: ['1', '4']
+  def create_tims(tim_types)
+    return if tim_types.nil? || tim_types.empty?
 
     image_maps = []
     tim_images_array = []
 
     @layout_images.each do |image|
-      if tim_ids.include?(image['Id'])
+      if tim_types.include?(image['Tim']) && image['Id'] =~ /^TIM/
         tim_images_array << [image]
       end
     end
@@ -535,10 +559,10 @@ class TimBuilder
     image_maps = []
     tim_images = []
     layout_images.each do |image|
-      if image['Id'] == 'TIMH'
+      if image['Id'] == 'TIMH' && image['Tim'] == '1'
         image['Path'] = path
         tim_images[0] = image
-      elsif image['Id'] == 'OBMI'
+      elsif image['Id'] == 'OBMI' && image['Tim'] == '1'
         image['Id'] = 'DKBI'
         image['MyId'] = "0x" + image['Id'].unpack('H*')[0].upcase
         tim_images[1] = image
@@ -622,15 +646,10 @@ class TimBuilder
       c_tim.num_keys = 0
     end
     c_tim.size_of_reserved = 0
-    puts "------------------------------------"
-    puts "#{image_maps}"
-    puts "#{tim_images}"
-    puts "------------------------------------"
+
     #IMAGE_INFO_3_4_0
     image_infos = []
     tim_images.each do |image|
-      puts "==========================="
-      puts "#{image}"
       image_info = ImageInfo_3_4_0.new(*([0]*7), [0]*16, 0)
       image_info.image_id = image['MyId'].hex
       image_info.next_image_id = image['NextIdInTim'].hex
@@ -748,11 +767,11 @@ class TimBuilder
       rsa_key = RsaKey.new
       rsa_key.load(rsa_private_key)
       exponent_str = sprintf("%0#{plat_ds.key_size/4}X", rsa_key.get_key[1])
-      exponent = [exponent_str].pack('H*').reverse.unpack('V*')
+      exponent = ([exponent_str].pack('H*').force_encoding('ASCII-8BIT')).reverse.unpack('V*')
       ds_rsa.rsa_public_exponent[0, exponent.size] = exponent
 
       modulus_str = sprintf("%0#{plat_ds.key_size/4}X", rsa_key.get_key[0])
-      modulus = [modulus_str].pack('H*').reverse.unpack('V*')
+      modulus = ([modulus_str].pack('H*').force_encoding('ASCII-8BIT')).reverse.unpack('V*')
       ds_rsa.rsa_modulus[0, modulus.size] = modulus
 
       plat_ds.key = ds_rsa
@@ -804,11 +823,11 @@ class TimBuilder
       rsa_key = RsaKey.new
       rsa_key.load(public_key)
       exponent_str = sprintf("%0#{key_mod.key_size/4}X", rsa_key.get_key[1])
-      exponent = [exponent_str].pack('H*').reverse.unpack('V*')
+      exponent = ([exponent_str].pack('H*').force_encoding('ASCII-8BIT')).reverse.unpack('V*')
       key_rsa.rsa_public_exponent[0, exponent.size] = exponent
 
       modulus_str = sprintf("%0#{key_mod.key_size/4}X", rsa_key.get_key[0])
-      modulus = [modulus_str].pack('H*').reverse.unpack('V*')
+      modulus = ([modulus_str].pack('H*').force_encoding('ASCII-8BIT')).reverse.unpack('V*')
       key_rsa.rsa_modulus[0, modulus.size] = modulus
       key_mod.key = key_rsa
 
@@ -1061,7 +1080,7 @@ class TimBuilder
       else
         raise "unsupported: #{hash_algm}"
     end
-    ds = private_key.sign(sha_name, data)
+    ds = private_key.sign(sha_name, data).force_encoding('ASCII-8BIT')
     return (ds.reverse).unpack('V*')
   end
 
