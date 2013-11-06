@@ -44,6 +44,8 @@ CREATE TABLE `rfic` (
 
 CREATE TABLE `radio_ota_release` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `model` char(32) NOT NULL,
+  `platform` char(32) NOT NULL,
   `fingerprint` char(128) NOT NULL,
   `md5` char(128) NOT NULL,
   `size` int(11) NOT NULL,
@@ -59,7 +61,10 @@ CREATE TABLE `release_creation_task` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `release_id` int(11) NOT NULL DEFAULT 0,
   `flag` tinyint(2) NOT NULL DEFAULT 0,
+  `retry_count` tinyint(2) NOT NULL DEFAULT 0,
   `update_request` text NOT NULL,
+  `model` char(32) NOT NULL,
+  `platform` char(32) NOT NULL,
   `fingerprint` char(128) NOT NULL,
   `binary_data` blob,
   `modified_ts` int NOT NULL,
