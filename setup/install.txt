@@ -43,3 +43,5 @@
 	create database ota
 11. install supervisor
 	sudo easy_install supervisor
+12. install memcache
+	sudo apt-get install memcache
