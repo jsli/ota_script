@@ -349,6 +349,7 @@ class TimConsts
     UART_ID = 'UART'.unpack('H*')[0].hex
     IMAP_ID = 'IMAP'.unpack('H*')[0].hex
     PRODUCT_ID = 'PROI'.unpack('H*')[0].hex
+    FUNC_CONFIG_ID = 'FCNF'.unpack('H*')[0].hex
     CIDP_ID = 'CIDP'.unpack('H*')[0].hex
     TERMINATOR_ID = 'Term'.unpack('H*')[0].hex
     MAX_RSA_KEYSIZE_WORDS = 64
@@ -461,6 +462,9 @@ class OptNoKeyDetect < ReservedPackageValue
 end
 
 class OPtNoFrequencyChange < ReservedPackageValue
+end
+
+class FuncConfig < ReservedPackageValue
 end
 
 class ProiT < Struct.new("ProiT", :wrah, :data)
@@ -916,6 +920,19 @@ class TimBuilder
       proi = ProiT.new(wrah, [product_id])
       wrah.size = (proi.to_bytes).bytesize
       reserved << proi
+      pad_size = (wrah.size + 3) & ~3 - wrah.size
+      reserved << PackagePadding.new(pad_size) if pad_size > 0
+      wtp_reserved_area.num_reserved_packages += 1
+    end
+
+    #func_config
+    if conf_reserved_data != nil && conf_reserved_data[0]['FCNF'] != nil
+      wrah = WtpReservedAreaHeader.new(0, 0)
+      wrah.identifier = TimConsts::FUNC_CONFIG_ID
+      conf_func_config = conf_reserved_data[0]['FCNF'][0]['FUNC_CONFIG'][0].hex
+      func_config = FuncConfig.new(wrah, conf_func_config)
+      wrah.size = (func_config.to_bytes).bytesize
+      reserved << func_config
       pad_size = (wrah.size + 3) & ~3 - wrah.size
       reserved << PackagePadding.new(pad_size) if pad_size > 0
       wtp_reserved_area.num_reserved_packages += 1
