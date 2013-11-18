@@ -72,3 +72,6 @@ CREATE TABLE `release_creation_task` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `fingerprint` (`fingerprint`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+
+alter table radio_ota_release add images text not null;
+alter table radio_ota_release add versions char(200) not null;
