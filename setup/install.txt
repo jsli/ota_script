@@ -51,3 +51,26 @@
 	cd redis-2.6.13
 	make
 	sudo make install
+	**config**
+	(1) wget https://github.com/ijonas/dotfiles/raw/master/etc/init.d/redis-server
+	(2) wget https://github.com/ijonas/dotfiles/raw/master/etc/redis.conf
+	(3) sudo mv redis-server /etc/init.d/redis-server
+	(4) sudo chmod +x /etc/init.d/redis-server
+	(5) sudo mv redis.conf /etc/redis.conf
+	
+	初始化用户和日志路径
+	sudo useradd redis
+	sudo mkdir -p /var/lib/redis
+	sudo mkdir -p /var/log/redis
+	sudo chown redis.redis /var/lib/redis
+	sudo chown redis.redis /var/log/redis
+
+	设置开机自动启动，关机自动关闭
+	sudo update-rc.d redis-server defaults
+
+	启动Redis
+	sudo /etc/init.d/redis-server start/stop
+
+
+
+
